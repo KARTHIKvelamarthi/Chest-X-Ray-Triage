@@ -1,0 +1,43 @@
+# Data and local persistence
+data/
+cases.db
+cases.db-journal
+cases.db-shm
+cases.db-wal
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.hypothesis/
+.venv/
+venv/
+ENV/
+env/
+
+# Node/Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+
+# Outputs and logs
+all_code.txt
+*.log
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
