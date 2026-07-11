@@ -24,6 +24,26 @@ historical cases, and adds the result to a sortable triage queue.
 
 ---
 
+## Screenshots
+
+### 1. Triage Queue Dashboard
+![Triage Queue Dashboard](docs/screenshots/triage_queue.png)
+*The main dashboard features glassmorphic summary stats cards that act as interactive filters. Triage cases are organized into content-focused, text-only cards that wrap dynamically based on viewport dimensions.*
+
+### 2. Diagnostic Case Detail (High Urgency & Human Review Escalation)
+![High Priority Case Detail](docs/screenshots/case_detail_high.png)
+*A detailed analysis page for a high-priority case flagged for human review. It displays DenseNet pathology scores, a Grad-CAM heatmap overlay, similar historical cases from Indiana University, and a RAG-grounded clinician explanation.*
+
+### 3. Diagnostic Case Detail (Routine Normal Priority Case)
+![Normal Priority Case Detail](docs/screenshots/case_detail_normal.png)
+*A routine case with a clear explanation, low findings score distribution, and relative historical cases.*
+
+### 4. Interactive File Upload Panel
+![File Upload Panel](docs/screenshots/upload_page.png)
+*The drag-and-drop diagnostic entry point with live client-side MIME validation and queue access.*
+
+---
+
 ## Setup
 
 ### 1. Create and activate the conda environment
@@ -194,4 +214,19 @@ data/images/images_normalized/   ← image files (PNG bytes despite .dcm extensi
 > - Hospital-specific adjustments (calibration to local scanners, demographics, and clinical pathways).
 > - Strict regulatory clearance and clinical validation trials.
 > - Full integration with hospital systems (PACS/DICOM) and data privacy compliance (HIPAA/GDPR/DPDP).
+
+---
+
+## Data & Model Attribution
+
+### Dataset
+- **Name:** Indiana University Chest X-Ray Collection (also known as Open-I), sourced from the National Library of Medicine's Open-i service.
+- **Citation:** Demner-Fushman D, Kohli MD, Rosenman MB, et al. "Preparing a collection of radiology examinations for distribution and retrieval." *J Am Med Inform Assoc*. 2016;23(2):304-310. PMID: 26133894.
+- **Distribution:** Sourced from the Kaggle release by user "raddar" ([kaggle.com/datasets/raddar/chest-xrays-indiana-university](https://www.kaggle.com/datasets/raddar/chest-xrays-indiana-university)), which provides the same reports and images pre-processed into CSV and PNG formats.
+- **Use Note:** All radiology reports and images in this dataset are de-identified and were released for open research use. This project uses them strictly for demonstration purposes, not for any commercial or clinical product.
+
+### Model
+- **Name:** `torchxrayvision` (specifically the `densenet121-res224-all` pretrained weights).
+- **Citation:** Cohen JP, Viviano JD, et al. "TorchXRayVision: A library of chest X-ray datasets and models." (MIDL 2022 / arXiv). Repository: [github.com/mlmed/torchxrayvision](https://github.com/mlmed/torchxrayvision).
+- **License:** Distributed under the **Apache License 2.0**.
 
