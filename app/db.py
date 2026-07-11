@@ -31,6 +31,7 @@ def init_db(db_path: str = DB_PATH) -> None:
                 explanation     TEXT    NOT NULL DEFAULT '',
                 explanation_source TEXT NOT NULL DEFAULT 'unavailable',
                 review_reason   TEXT,
+                evidence_links_json TEXT NOT NULL DEFAULT '{}',
                 created_at      TEXT    NOT NULL
             )
         """)
@@ -39,6 +40,13 @@ def init_db(db_path: str = DB_PATH) -> None:
         # Ensure review_reason column exists in case the table was created under an older schema
         try:
             conn.execute("ALTER TABLE cases ADD COLUMN review_reason TEXT")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass
+
+        # Ensure evidence_links_json column exists
+        try:
+            conn.execute("ALTER TABLE cases ADD COLUMN evidence_links_json TEXT NOT NULL DEFAULT '{}'")
             conn.commit()
         except sqlite3.OperationalError:
             pass
@@ -52,8 +60,8 @@ def insert_case(conn: sqlite3.Connection, case: dict) -> int:
             (filename, top_finding, top_score, findings_json,
              heatmap_path, thumbnail_path, priority, status,
              similar_cases_json, explanation, explanation_source,
-             review_reason, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             review_reason, evidence_links_json, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             case["filename"],
@@ -68,6 +76,7 @@ def insert_case(conn: sqlite3.Connection, case: dict) -> int:
             case.get("explanation", ""),
             case.get("explanation_source", "unavailable"),
             case.get("review_reason"),
+            case.get("evidence_links_json", "{}"),
             case.get("created_at", datetime.now(timezone.utc).isoformat()),
         ),
     )

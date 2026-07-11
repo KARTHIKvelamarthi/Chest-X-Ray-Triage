@@ -10,6 +10,7 @@ from PIL import Image, UnidentifiedImageError
 
 from app.classifier import run_inference, get_query_embedding
 from app.db import insert_case
+from app.evidence import get_near_top_findings, match_findings_to_cases
 from app.explainer import build_prompt, get_explanation
 from app.gradcam import generate_heatmap
 from app.models import AnalyzeResponse, FindingScore, SimilarCase
@@ -96,6 +97,10 @@ async def analyze(request: Request, file: UploadFile = File(...)):
         for c in similar_raw
     ]
 
+    # --- evidence linking ---
+    near_top = get_near_top_findings(scores)
+    evidence_links = match_findings_to_cases(near_top, similar_raw)
+
     # --- grounded explanation ---
     prompt = build_prompt(scores, similar_raw)
     explanation, explanation_source = get_explanation(prompt)
@@ -121,6 +126,7 @@ async def analyze(request: Request, file: UploadFile = File(...)):
         "similar_cases_json": json.dumps([c.model_dump() for c in similar_cases]),
         "explanation": explanation,
         "explanation_source": explanation_source,
+        "evidence_links_json": json.dumps(evidence_links),
         "created_at": now,
     }
 
@@ -147,6 +153,7 @@ async def analyze(request: Request, file: UploadFile = File(...)):
         similar_cases=similar_cases,
         explanation=explanation,
         explanation_source=explanation_source,
+        evidence_links=evidence_links,
         disclaimer=DISCLAIMER,
         created_at=now,
     )

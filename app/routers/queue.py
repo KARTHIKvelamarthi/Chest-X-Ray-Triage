@@ -44,6 +44,7 @@ def _row_to_detail(row: dict) -> CaseDetail:
     ]
     similar_raw = json.loads(row.get("similar_cases_json", "[]"))
     similar_cases = [SimilarCase(**c) for c in similar_raw]
+    evidence_links = json.loads(row.get("evidence_links_json", "{}"))
 
     return CaseDetail(
         id=row["id"],
@@ -59,6 +60,7 @@ def _row_to_detail(row: dict) -> CaseDetail:
         similar_cases=similar_cases,
         explanation=row.get("explanation", ""),
         explanation_source=row.get("explanation_source", "unavailable"),
+        evidence_links=evidence_links,
         disclaimer=DISCLAIMER,
         created_at=row["created_at"],
     )

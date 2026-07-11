@@ -59,6 +59,7 @@ def build_prompt(query_scores: dict[str, float], similar_cases: list[dict]) -> s
         f"Similar historical cases from the dataset showed:\n{context_block}\n\n"
         f"Based ONLY on the information above, describe in 2-3 plain-language sentences "
         f"what the current image's findings may be consistent with. "
+        f"When referencing a finding that has supporting historical evidence, use its exact label name as given (e.g. 'Effusion', not a paraphrase), so it can be matched precisely later. Only claim similarity to historical cases for findings explicitly listed as having evidence. "
         f"Do not invent information not present in the context. "
         f"End with: 'This is AI-generated prototype output — not for clinical use.'"
     )

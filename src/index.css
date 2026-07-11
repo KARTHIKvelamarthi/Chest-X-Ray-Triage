@@ -449,3 +449,27 @@ h3 { font-size: 1.1rem; margin-bottom: 12px; color: var(--color-muted); }
   font-size: 0.78rem;
   font-family: monospace;
 }
+
+/* Evidence linking text spans */
+.evidence-link-span {
+  text-decoration: underline dotted var(--color-primary);
+  text-underline-offset: 4px;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+.evidence-link-span:hover {
+  color: #3498db;
+}
+
+/* Similar case highlighted card style */
+.similar-case-card {
+  transition: border-color 2s ease, box-shadow 2s ease, background-color 2s ease;
+}
+.similar-case-card.highlighted-case {
+  border-color: #3498db !important;
+  box-shadow: 0 0 12px rgba(52, 152, 219, 0.4);
+  background-color: rgba(52, 152, 219, 0.05);
+  transition: none;
+}

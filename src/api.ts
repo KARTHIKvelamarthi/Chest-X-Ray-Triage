@@ -28,6 +28,7 @@ export interface AnalyzeResponse {
   status: string;
   similar_cases: SimilarCase[];
   explanation: string;
+  evidence_links: Record<string, string[]>;
   disclaimer: string;
   created_at: string;
 }

@@ -29,6 +29,7 @@ class AnalyzeResponse(BaseModel):
     similar_cases: list[SimilarCase]
     explanation: str
     explanation_source: Literal["openai", "ollama", "unavailable"]
+    evidence_links: dict[str, list[str]] = {}
     disclaimer: str
     created_at: str
 
@@ -60,6 +61,7 @@ class CaseDetail(BaseModel):
     similar_cases: list[SimilarCase]
     explanation: str
     explanation_source: Literal["openai", "ollama", "unavailable"]
+    evidence_links: dict[str, list[str]] = {}
     disclaimer: str
     created_at: str
 

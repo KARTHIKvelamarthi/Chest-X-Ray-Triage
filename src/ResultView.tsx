@@ -77,6 +77,54 @@ export function ResultView() {
     ? `${BASE}${caseData.heatmap_url}`
     : `${BASE}${caseData.thumbnail_url}`;
 
+  function handleEvidenceClick(uids: string[]) {
+    uids.forEach((uid, index) => {
+      const el = document.getElementById(`case-${uid}`);
+      if (el) {
+        if (index === 0) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        el.classList.add("highlighted-case");
+        setTimeout(() => {
+          el.classList.remove("highlighted-case");
+        }, 2000);
+      }
+    });
+  }
+
+  function renderExplanation(text: string, evidenceLinks?: Record<string, string[]>) {
+    if (!text) return "";
+    if (!evidenceLinks) return text;
+
+    const keys = Object.keys(evidenceLinks).filter(
+      (k) => evidenceLinks[k] && evidenceLinks[k].length > 0
+    );
+    if (keys.length === 0) return text;
+
+    // Sort by length desc to match longer labels first
+    keys.sort((a, b) => b.length - a.length);
+
+    // Escape keys for RegExp
+    const escapedKeys = keys.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const pattern = new RegExp(`\\b(${escapedKeys.join("|")})\\b`, "g");
+    const parts = text.split(pattern);
+
+    return parts.map((part, i) => {
+      if (keys.includes(part)) {
+        return (
+          <span
+            key={i}
+            className="evidence-link-span"
+            onClick={() => handleEvidenceClick(evidenceLinks[part])}
+          >
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  }
+
   return (
     <div className="view-container">
       <Disclaimer />
@@ -180,7 +228,7 @@ export function ResultView() {
         ) : (
           <ul className="similar-cases-list">
             {caseData.similar_cases.map((sc, i) => (
-              <li key={i} className="similar-case-card">
+              <li key={i} id={`case-${sc.uid}`} className="similar-case-card">
                 <div className="similar-case-header">
                   <strong>Case {sc.uid}</strong>
                   <span className="similarity-badge">
@@ -204,7 +252,9 @@ export function ResultView() {
         >
           AI-generated prototype output — not for clinical use
         </p>
-        <p data-testid="explanation-text">{caseData.explanation}</p>
+        <p data-testid="explanation-text">
+          {renderExplanation(caseData.explanation, caseData.evidence_links)}
+        </p>
       </div>
     </div>
   );

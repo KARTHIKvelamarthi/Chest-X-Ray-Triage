@@ -30,6 +30,7 @@ def make_conn():
             explanation     TEXT    NOT NULL DEFAULT '',
             explanation_source TEXT NOT NULL DEFAULT 'unavailable',
             review_reason   TEXT,
+            evidence_links_json TEXT NOT NULL DEFAULT '{}',
             created_at      TEXT    NOT NULL
         )
     """)
