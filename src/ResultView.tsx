@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
-} from "recharts";
 import { fetchCase, markReviewed, CaseDetail } from "./api";
 import { Disclaimer } from "./Disclaimer";
 
@@ -58,7 +55,7 @@ export function ResultView() {
   }
 
   const chartData = caseData.findings.slice(0, 10).map((f) => ({
-    name: f.label.length > 18 ? f.label.slice(0, 18) + "…" : f.label,
+    name: f.label.length > 20 ? f.label.slice(0, 20) + "…" : f.label,
     score: parseFloat((f.score * 100).toFixed(1)),
   }));
 
@@ -124,24 +121,29 @@ export function ResultView() {
         </div>
       </div>
 
-      {/* Finding scores bar chart */}
+      {/* Custom Finding scores list */}
       <div className="chart-section">
         <h3>Finding Scores (top 10)</h3>
-        <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={chartData} layout="vertical" margin={{ left: 20, right: 20 }}>
-            <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
-            <YAxis type="category" dataKey="name" width={160} />
-            <Tooltip formatter={(v: number) => `${v}%`} />
-            <Bar dataKey="score" radius={[0, 4, 4, 0]}>
-              {chartData.map((entry, i) => (
-                <Cell
-                  key={i}
-                  fill={entry.score > 70 ? "#e74c3c" : entry.score > 40 ? "#f39c12" : "#3498db"}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="chart-list">
+          {chartData.map((entry, i) => {
+            const levelClass = entry.score > 70 ? "high" : entry.score > 40 ? "medium" : "low";
+            return (
+              <div
+                key={i}
+                className={`chart-row ${levelClass}`}
+                style={{ "--target-width": `${entry.score}%` } as React.CSSProperties}
+              >
+                <span className="finding-name" title={entry.name}>
+                  {entry.name}
+                </span>
+                <div className="bar-track">
+                  <div className="bar-fill" />
+                </div>
+                <span className="finding-score">{entry.score}%</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Similar cases panel */}
