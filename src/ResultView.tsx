@@ -11,6 +11,7 @@ export function ResultView() {
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -228,15 +229,28 @@ export function ResultView() {
         ) : (
           <ul className="similar-cases-list">
             {caseData.similar_cases.map((sc, i) => (
-              <li key={i} id={`case-${sc.uid}`} className="similar-case-card">
-                <div className="similar-case-header">
-                  <strong>Case {sc.uid}</strong>
-                  <span className="similarity-badge">
-                    {(sc.similarity * 100).toFixed(1)}% similar
-                  </span>
+              <li key={i} className="similar-case-row">
+                {sc.image_url && (
+                  <img
+                    src={`${BASE}${sc.image_url}`}
+                    alt={`Case ${sc.uid} X-ray`}
+                    className="similar-case-thumb"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveLightboxImage(`${BASE}${sc.image_url}`);
+                    }}
+                  />
+                )}
+                <div id={`case-${sc.uid}`} className="similar-case-card">
+                  <div className="similar-case-header">
+                    <strong>Case {sc.uid}</strong>
+                    <span className="similarity-badge">
+                      {(sc.similarity * 100).toFixed(1)}% similar
+                    </span>
+                  </div>
+                  {sc.findings && <p className="report-text"><em>Findings:</em> {sc.findings}</p>}
+                  {sc.impression && <p className="report-text"><em>Impression:</em> {sc.impression}</p>}
                 </div>
-                {sc.findings && <p className="report-text"><em>Findings:</em> {sc.findings}</p>}
-                {sc.impression && <p className="report-text"><em>Impression:</em> {sc.impression}</p>}
               </li>
             ))}
           </ul>
@@ -256,6 +270,22 @@ export function ResultView() {
           {renderExplanation(caseData.explanation, caseData.evidence_links)}
         </p>
       </div>
+
+      {/* Lightbox modal overlay */}
+      {activeLightboxImage && (
+        <div
+          className="lightbox-overlay"
+          onClick={() => setActiveLightboxImage(null)}
+          data-testid="lightbox-overlay"
+        >
+          <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <button className="lightbox-close" onClick={() => setActiveLightboxImage(null)}>
+              &times;
+            </button>
+            <img src={activeLightboxImage} alt="Fullscreen X-ray" className="lightbox-img" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

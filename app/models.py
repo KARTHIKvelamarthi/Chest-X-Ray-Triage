@@ -13,6 +13,7 @@ class SimilarCase(BaseModel):
     findings: Optional[str] = None
     impression: Optional[str] = None
     similarity: float
+    image_url: Optional[str] = None
 
 
 class AnalyzeResponse(BaseModel):

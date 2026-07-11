@@ -65,6 +65,7 @@ app.add_middleware(
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/data/images/images_normalized", StaticFiles(directory="data/images/images_normalized"), name="data_images")
 
 app.include_router(analyze.router)
 app.include_router(queue.router)

@@ -14,6 +14,7 @@ export interface SimilarCase {
   findings: string | null;
   impression: string | null;
   similarity: number;
+  image_url?: string | null;
 }
 
 export interface AnalyzeResponse {

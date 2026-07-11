@@ -93,6 +93,7 @@ async def analyze(request: Request, file: UploadFile = File(...)):
             findings=c.get("findings"),
             impression=c.get("impression"),
             similarity=c.get("similarity", 0.0),
+            image_url=f"/data/images/images_normalized/{os.path.basename(c['image_path'])}" if c.get("image_path") else None,
         )
         for c in similar_raw
     ]
