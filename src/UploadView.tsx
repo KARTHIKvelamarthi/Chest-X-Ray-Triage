@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { analyzeImage } from "./api";
 import { Disclaimer } from "./Disclaimer";
@@ -11,6 +11,7 @@ export function UploadView() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [isWindowDragging, setIsWindowDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -38,6 +39,54 @@ export function UploadView() {
     if (f) handleFile(f);
   }
 
+  useEffect(() => {
+    let dragCounter = 0;
+
+    const handleDragEnter = (e: DragEvent) => {
+      e.preventDefault();
+      if (e.dataTransfer?.types.includes("Files")) {
+        dragCounter++;
+        setIsWindowDragging(true);
+      }
+    };
+
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      if (e.dataTransfer?.types.includes("Files")) {
+        dragCounter--;
+        if (dragCounter === 0) {
+          setIsWindowDragging(false);
+        }
+      }
+    };
+
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+    };
+
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+      dragCounter = 0;
+      setIsWindowDragging(false);
+      const f = e.dataTransfer?.files?.[0];
+      if (f) {
+        handleFile(f);
+      }
+    };
+
+    window.addEventListener("dragenter", handleDragEnter);
+    window.addEventListener("dragleave", handleDragLeave);
+    window.addEventListener("dragover", handleDragOver);
+    window.addEventListener("drop", handleDrop);
+
+    return () => {
+      window.removeEventListener("dragenter", handleDragEnter);
+      window.removeEventListener("dragleave", handleDragLeave);
+      window.removeEventListener("dragover", handleDragOver);
+      window.removeEventListener("drop", handleDrop);
+    };
+  }, []);
+
   async function onAnalyze() {
     if (!file) return;
     setLoading(true);
@@ -58,6 +107,17 @@ export function UploadView() {
       <h1>Chest X-Ray Triage</h1>
       <p className="subtitle">Upload a chest X-ray to run automated analysis.</p>
 
+      {/* Full-screen drag-and-drop visual overlay */}
+      {isWindowDragging && (
+        <div className="full-screen-drag-overlay">
+          <div className="overlay-content">
+            <span className="overlay-icon">🫁</span>
+            <h2>Drop Chest X-Ray Here</h2>
+            <p>Release to instantly stage the image</p>
+          </div>
+        </div>
+      )}
+
       <div
         className={`drop-zone ${dragging ? "dragging" : ""}`}
         onClick={() => inputRef.current?.click()}
@@ -70,7 +130,18 @@ export function UploadView() {
         onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
       >
         {preview ? (
-          <img src={preview} alt="Selected X-ray preview" className="preview-img" />
+          <div className="preview-container" onClick={(e) => e.stopPropagation()}>
+            <img src={preview} alt="Selected X-ray preview" className="preview-img" />
+            <div className="file-details-card">
+              <span className="file-details-icon">📄</span>
+              <div className="file-details-info">
+                <p className="file-details-name" title={file?.name}>{file?.name}</p>
+                <p className="file-details-size">
+                  {file ? (file.size / 1024 / 1024).toFixed(2) : "0.00"} MB
+                </p>
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="drop-placeholder">
             <span className="drop-icon">🫁</span>
@@ -102,6 +173,18 @@ export function UploadView() {
         >
           {loading ? <span className="spinner" aria-label="Analyzing..." /> : "Analyze"}
         </button>
+        {file && !loading && (
+          <button
+            className="btn-secondary"
+            onClick={() => {
+              setFile(null);
+              setPreview(null);
+              setError(null);
+            }}
+          >
+            Clear Selection
+          </button>
+        )}
         <button className="btn-secondary" onClick={() => navigate("/queue")}>
           View Queue
         </button>
