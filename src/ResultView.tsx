@@ -27,15 +27,25 @@ export function ResultView() {
   }, [id]);
 
   useEffect(() => {
+    if (!caseData) return;
     fetchQueue()
       .then((data) => {
-        const needsReview = data.filter((c) => c.status === "needs_human_review");
-        const routine = data.filter((c) => c.status !== "needs_human_review");
-        const sortedRoutine = sortCases(routine, "priority");
-        setQueueCases([...needsReview, ...sortedRoutine]);
+        if (caseData.status === "reviewed") {
+          // If viewing a reviewed case, paginate through all reviewed cases
+          const reviewedCases = data.filter((c) => c.status === "reviewed");
+          const sortedReviewed = sortCases(reviewedCases, "timestamp");
+          setQueueCases(sortedReviewed);
+        } else {
+          // If viewing an active case, paginate through all active cases
+          const activeData = data.filter((c) => c.status !== "reviewed");
+          const needsReview = activeData.filter((c) => c.status === "needs_human_review");
+          const routine = activeData.filter((c) => c.status === "pending");
+          const sortedRoutine = sortCases(routine, "priority");
+          setQueueCases([...needsReview, ...sortedRoutine]);
+        }
       })
       .catch((err) => console.error("Error loading queue:", err));
-  }, []);
+  }, [caseData]);
 
   async function onMarkReviewed() {
     if (!caseData) return;

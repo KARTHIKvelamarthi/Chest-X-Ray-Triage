@@ -24,22 +24,18 @@ function CaseCard({
   onClick: () => void;
   showReason?: boolean;
 }) {
+  const isNeedsReview = c.status === "needs_human_review";
+  const cardClass = `case-card ${isNeedsReview ? "status-needs-review" : ""} priority-${c.priority.toLowerCase()}`;
+
   return (
     <div
-      className="case-card"
+      className={cardClass}
       onClick={onClick}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
       data-testid={`case-card-${c.id}`}
     >
-      {c.thumbnail_url && (
-        <img
-          src={`${BASE}${c.thumbnail_url}`}
-          alt={`Thumbnail for ${c.filename}`}
-          className="case-thumb"
-        />
-      )}
       <div className="case-card-body">
         <div className="case-card-row">
           <strong className="case-finding">{c.top_finding}</strong>
@@ -49,7 +45,7 @@ function CaseCard({
           <span className={`badge badge-priority-${c.priority.toLowerCase()}`}>
             {c.priority}
           </span>
-          <span className="case-time">{new Date(c.created_at).toLocaleString()}</span>
+          <span className="case-time">{new Date(c.created_at).toLocaleDateString()}</span>
         </div>
         {showReason && c.review_reason && (
           <p className="review-reason-label" data-testid={`review-reason-${c.id}`}>
@@ -67,6 +63,7 @@ export function QueueView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortField>("priority");
+  const [filter, setFilter] = useState<"active" | "needs_review" | "high_priority" | "reviewed">("active");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -76,18 +73,40 @@ export function QueueView() {
       .finally(() => setLoading(false));
   }, []);
 
-  const needsReview = cases.filter((c) => c.status === "needs_human_review");
-  const routine = cases.filter((c) => c.status !== "needs_human_review");
-  const sortedRoutine = sortCases(routine, sortBy);
+  // Calculate totals
+  const totalQueueCount = cases.filter((c) => c.status === "pending" || c.status === "needs_human_review").length;
+  const needsReviewCount = cases.filter((c) => c.status === "needs_human_review").length;
+  const highPriorityCount = cases.filter((c) => c.priority === "High" && c.status !== "reviewed").length;
+  const reviewedCount = cases.filter((c) => c.status === "reviewed").length;
 
-  const lowConfCount = needsReview.filter((c) => c.review_reason === "low_confidence").length;
-  const multCount = needsReview.filter((c) => c.review_reason === "multiple_findings").length;
+  // Filter the cases to display
+  let displayNeedsReview = cases.filter((c) => c.status === "needs_human_review");
+  let displayRoutine = cases.filter((c) => c.status === "pending");
+
+  if (filter === "needs_review") {
+    displayRoutine = [];
+  } else if (filter === "high_priority") {
+    displayNeedsReview = displayNeedsReview.filter((c) => c.priority === "High");
+    displayRoutine = displayRoutine.filter((c) => c.priority === "High");
+  } else if (filter === "reviewed") {
+    displayNeedsReview = [];
+    displayRoutine = cases.filter((c) => c.status === "reviewed");
+  }
+
+  const sortedRoutine = sortCases(displayRoutine, sortBy);
+
+  const lowConfCount = displayNeedsReview.filter((c) => c.review_reason === "low_confidence").length;
+  const multCount = displayNeedsReview.filter((c) => c.review_reason === "multiple_findings").length;
   const parts = [];
   if (lowConfCount > 0) parts.push(`${lowConfCount} low confidence`);
   if (multCount > 0) parts.push(`${multCount} multiple findings`);
   const laneSubtitle = parts.length > 0
     ? `Requires manual evaluation: ${parts.join(" and ")}.`
     : "These cases have ambiguous or low-confidence findings and require manual evaluation.";
+
+  const routineTitle = filter === "reviewed" ? "Reviewed Cases" : filter === "high_priority" ? "Pending Cases (High Priority)" : "Pending Cases";
+  const routineIcon = filter === "reviewed" ? "✓" : "☰";
+  const needsReviewTitle = filter === "high_priority" ? "Needs Human Review (High Priority)" : "Needs Human Review";
 
   return (
     <div className="view-container">
@@ -102,52 +121,116 @@ export function QueueView() {
       {loading && <p>Loading queue…</p>}
       {error && <p className="inline-error">{error}</p>}
 
-      {/* Needs Human Review lane */}
-      {needsReview.length > 0 && (
-        <section className="queue-lane lane-review" data-testid="needs-review-lane">
-          <h2 className="lane-title">⚠ Needs Human Review</h2>
-          <p className="lane-subtitle">
-            {laneSubtitle}
-          </p>
-          <div className="case-list">
-            {needsReview.map((c) => (
-              <CaseCard key={c.id} c={c} onClick={() => navigate(`/result/${c.id}`)} showReason={true} />
-            ))}
+      {/* Summary Stats Row */}
+      {!loading && !error && (
+        <div className="stats-row">
+          <div
+            className={`stat-card clickable ${filter === "active" ? "active-filter" : ""}`}
+            onClick={() => setFilter("active")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setFilter("active")}
+            data-testid="stat-total-queue"
+          >
+            <span className="stat-value">{totalQueueCount}</span>
+            <span className="stat-label">Total Queue</span>
           </div>
+          <div
+            className={`stat-card clickable stat-needs-review ${filter === "needs_review" ? "active-filter" : ""}`}
+            onClick={() => setFilter("needs_review")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setFilter("needs_review")}
+            data-testid="stat-needs-review"
+          >
+            <span className="stat-value">{needsReviewCount}</span>
+            <span className="stat-label">Needs Review</span>
+          </div>
+          <div
+            className={`stat-card clickable stat-high-priority ${filter === "high_priority" ? "active-filter" : ""}`}
+            onClick={() => setFilter("high_priority")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setFilter("high_priority")}
+            data-testid="stat-high-priority"
+          >
+            <span className="stat-value">{highPriorityCount}</span>
+            <span className="stat-label">High Priority</span>
+          </div>
+          <div
+            className={`stat-card clickable stat-reviewed ${filter === "reviewed" ? "active-filter" : ""}`}
+            onClick={() => setFilter("reviewed")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && setFilter("reviewed")}
+            data-testid="stat-reviewed"
+          >
+            <span className="stat-value">{reviewedCount}</span>
+            <span className="stat-label">Reviewed</span>
+          </div>
+        </div>
+      )}
+
+      {/* Needs Human Review section */}
+      {!loading && filter !== "reviewed" && (
+        <section className="queue-lane">
+          <h2 className="lane-title subordinate-header">
+            <span className="header-icon-prefix">⚠</span> {needsReviewTitle}
+          </h2>
+          {displayNeedsReview.length === 0 ? (
+            <p className="quiet-empty-message">✓ No cases currently require manual review.</p>
+          ) : (
+            <div className="lane-review" data-testid="needs-review-lane">
+              <p className="lane-subtitle">
+                {laneSubtitle}
+              </p>
+              <div className="case-list">
+                {displayNeedsReview.map((c) => (
+                  <CaseCard key={c.id} c={c} onClick={() => navigate(`/result/${c.id}`)} showReason={true} />
+                ))}
+              </div>
+            </div>
+          )}
         </section>
       )}
 
       {/* Routine priority lane */}
-      <section className="queue-lane" data-testid="routine-lane">
-        <div className="lane-header">
-          <h2 className="lane-title">Pending Cases</h2>
-          <div className="sort-controls">
-            <span>Sort by:</span>
-            <button
-              className={`btn-toggle ${sortBy === "priority" ? "active" : ""}`}
-              onClick={() => setSortBy("priority")}
-            >
-              Priority
-            </button>
-            <button
-              className={`btn-toggle ${sortBy === "timestamp" ? "active" : ""}`}
-              onClick={() => setSortBy("timestamp")}
-            >
-              Time
-            </button>
+      {!loading && (
+        <section className="queue-lane" data-testid="routine-lane">
+          <div className="lane-header">
+            <h2 className="lane-title subordinate-header">
+              <span className="header-icon-prefix">{routineIcon}</span> {routineTitle}
+            </h2>
+            {filter !== "reviewed" && (
+              <div className="sort-controls">
+                <span>Sort by:</span>
+                <button
+                  className={`btn-toggle ${sortBy === "priority" ? "active" : ""}`}
+                  onClick={() => setSortBy("priority")}
+                >
+                  Priority
+                </button>
+                <button
+                  className={`btn-toggle ${sortBy === "timestamp" ? "active" : ""}`}
+                  onClick={() => setSortBy("timestamp")}
+                >
+                  Time
+                </button>
+              </div>
+            )}
           </div>
-        </div>
 
-        {sortedRoutine.length === 0 && !loading ? (
-          <p className="empty-state">No cases in the queue. Upload an X-ray to get started.</p>
-        ) : (
-          <div className="case-list">
-            {sortedRoutine.map((c) => (
-              <CaseCard key={c.id} c={c} onClick={() => navigate(`/result/${c.id}`)} />
-            ))}
-          </div>
-        )}
-      </section>
+          {sortedRoutine.length === 0 ? (
+            <p className="quiet-empty-message">✓ No cases to display.</p>
+          ) : (
+            <div className="case-list">
+              {sortedRoutine.map((c) => (
+                <CaseCard key={c.id} c={c} onClick={() => navigate(`/result/${c.id}`)} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }
