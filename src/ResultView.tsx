@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { fetchCase, markReviewed, deleteCase, CaseDetail } from "./api";
+import { fetchCase, markReviewed, deleteCase, CaseDetail, fetchQueue, CaseSummary } from "./api";
 import { Disclaimer } from "./Disclaimer";
+import { sortCases } from "./sortCases";
+
+const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
 export function ResultView() {
   const { id } = useParams<{ id: string }>();
@@ -12,6 +15,7 @@ export function ResultView() {
   const [reviewing, setReviewing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null);
+  const [queueCases, setQueueCases] = useState<CaseSummary[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -21,6 +25,17 @@ export function ResultView() {
         setError(err.message === "NOT_FOUND" ? "Case not found." : "Failed to load case.");
       });
   }, [id]);
+
+  useEffect(() => {
+    fetchQueue()
+      .then((data) => {
+        const needsReview = data.filter((c) => c.status === "needs_human_review");
+        const routine = data.filter((c) => c.status !== "needs_human_review");
+        const sortedRoutine = sortCases(routine, "priority");
+        setQueueCases([...needsReview, ...sortedRoutine]);
+      })
+      .catch((err) => console.error("Error loading queue:", err));
+  }, []);
 
   async function onMarkReviewed() {
     if (!caseData) return;
@@ -48,7 +63,7 @@ export function ResultView() {
     }
   }
 
-  const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+  const currentIndex = caseData ? queueCases.findIndex((c) => c.id === caseData.id) : -1;
 
   if (error) {
     return (
@@ -201,6 +216,32 @@ export function ResultView() {
 
         {/* Right Column: Finding Scores chart with glassmorphism */}
         <div className="result-right-column">
+          {queueCases.length > 0 && currentIndex !== -1 && (
+            <div className="queue-pagination-container">
+              <button
+                className={`pagination-arrow left ${currentIndex === 0 ? "disabled" : ""}`}
+                onClick={() => currentIndex > 0 && navigate(`/result/${queueCases[currentIndex - 1].id}`)}
+                disabled={currentIndex === 0}
+                title="Previous Case"
+                data-testid="prev-case-btn"
+              >
+                &larr;
+              </button>
+              <span className="pagination-text" data-testid="pagination-text">
+                Case <strong>{currentIndex + 1}</strong> of <strong>{queueCases.length}</strong>
+              </span>
+              <button
+                className={`pagination-arrow right ${currentIndex === queueCases.length - 1 ? "disabled" : ""}`}
+                onClick={() => currentIndex < queueCases.length - 1 && navigate(`/result/${queueCases[currentIndex + 1].id}`)}
+                disabled={currentIndex === queueCases.length - 1}
+                title="Next Case"
+                data-testid="next-case-btn"
+              >
+                &rarr;
+              </button>
+            </div>
+          )}
+
           <div className="chart-section glassmorphic-chart">
             <h3>FINAL SCORES</h3>
             <div className="chart-list">
