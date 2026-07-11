@@ -6,6 +6,11 @@ cases.db-shm
 cases.db-wal
 static/uploads/*
 !static/uploads/.gitkeep
+static/heatmaps/*
+!static/heatmaps/.gitkeep
+static/thumbnails/*
+!static/thumbnails/.gitkeep
+.kiro/
 
 # Python
 __pycache__/
