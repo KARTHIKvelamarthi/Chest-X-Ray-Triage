@@ -127,7 +127,7 @@ export function ResultView() {
   }
 
   return (
-    <div className="view-container">
+    <div className="view-container result-details-layout">
       <Disclaimer />
       <div className="result-header">
         <button className="btn-secondary" onClick={() => navigate("/queue")}>
@@ -158,64 +158,92 @@ export function ResultView() {
         </div>
       </div>
 
-      {/* Status badges */}
-      <div className="badge-row">
-        <span className={`badge badge-priority-${caseData.priority.toLowerCase()}`}>
-          {caseData.priority}
-        </span>
-        {caseData.status === "needs_human_review" && (
-          <span className="badge badge-review-needed">⚠ Needs Human Review</span>
-        )}
-      </div>
+      {/* Row 1: Three-column layout */}
+      <div className="result-top-section">
+        {/* Left Column: Priority tag, X-ray image, and Original/Heatmap toggle */}
+        <div className="result-left-column">
+          {/* Status badges */}
+          <div className="badge-row">
+            <span className={`badge badge-priority-${caseData.priority.toLowerCase()}`}>
+              {caseData.priority}
+            </span>
+            {caseData.status === "needs_human_review" && (
+              <span className="badge badge-review-needed">⚠ Needs Human Review</span>
+            )}
+          </div>
 
-      {/* Image / heatmap toggle */}
-      <div className="image-section">
-        <img
-          src={imgSrc}
-          alt={showHeatmap ? "Grad-CAM heatmap overlay" : "Original X-ray"}
-          className="result-img"
-          data-testid="result-image"
-        />
-        <div className="toggle-row">
-          <button
-            className={`btn-toggle ${!showHeatmap ? "active" : ""}`}
-            onClick={() => setShowHeatmap(false)}
-            data-testid="toggle-original"
-          >
-            Original
-          </button>
-          <button
-            className={`btn-toggle ${showHeatmap ? "active" : ""}`}
-            onClick={() => setShowHeatmap(true)}
-            data-testid="toggle-heatmap"
-          >
-            Heatmap
-          </button>
-        </div>
-      </div>
-
-      {/* Custom Finding scores list */}
-      <div className="chart-section">
-        <h3>Finding Scores (top 10)</h3>
-        <div className="chart-list">
-          {chartData.map((entry, i) => {
-            const levelClass = entry.score > 70 ? "high" : entry.score > 40 ? "medium" : "low";
-            return (
-              <div
-                key={i}
-                className={`chart-row ${levelClass}`}
-                style={{ "--target-width": `${entry.score}%` } as React.CSSProperties}
+          {/* Image / heatmap toggle */}
+          <div className="image-section">
+            <img
+              src={imgSrc}
+              alt={showHeatmap ? "Grad-CAM heatmap overlay" : "Original X-ray"}
+              className="result-img"
+              data-testid="result-image"
+            />
+            <div className="toggle-row">
+              <button
+                className={`btn-toggle ${!showHeatmap ? "active" : ""}`}
+                onClick={() => setShowHeatmap(false)}
+                data-testid="toggle-original"
               >
-                <span className="finding-name" title={entry.name}>
-                  {entry.name}
-                </span>
-                <div className="bar-track">
-                  <div className="bar-fill" />
-                </div>
-                <span className="finding-score">{entry.score}%</span>
+                Original
+              </button>
+              <button
+                className={`btn-toggle ${showHeatmap ? "active" : ""}`}
+                onClick={() => setShowHeatmap(true)}
+                data-testid="toggle-heatmap"
+              >
+                Heatmap
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Finding Scores chart with glassmorphism */}
+        <div className="result-right-column">
+          <div className="chart-section glassmorphic-chart">
+            <h3>FINAL SCORES</h3>
+            <div className="chart-list">
+              {chartData.map((entry, i) => {
+                const levelClass = entry.score > 70 ? "high" : entry.score > 40 ? "medium" : "low";
+                return (
+                  <div
+                    key={i}
+                    className={`chart-row ${levelClass}`}
+                    style={{ "--target-width": `${entry.score}%` } as React.CSSProperties}
+                  >
+                    <span className="finding-name" title={entry.name}>
+                      {entry.name}
+                    </span>
+                    <div className="bar-track">
+                      <div className="bar-fill" />
+                    </div>
+                    <span className="finding-score">{entry.score}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Column 3: Grounded Explanation sidebar panel */}
+        <div className="result-explanation-column">
+          <div className="explanation-section sidebar-explanation-panel">
+            <h3>Grounded Explanation</h3>
+            <div className="sidebar-message-bubble">
+              <p
+                className="disclaimer-label sidebar-message-header"
+                data-testid="explanation-disclaimer"
+              >
+                AI-generated prototype output — not for clinical use
+              </p>
+              <div className="sidebar-message-content">
+                <p data-testid="explanation-text">
+                  {renderExplanation(caseData.explanation, caseData.evidence_links)}
+                </p>
               </div>
-            );
-          })}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -227,49 +255,39 @@ export function ResultView() {
             No similar cases found. Run <code>scripts/build_index.py</code> to enable retrieval.
           </p>
         ) : (
-          <ul className="similar-cases-list">
-            {caseData.similar_cases.map((sc, i) => (
-              <li key={i} className="similar-case-row">
-                {sc.image_url && (
-                  <img
-                    src={`${BASE}${sc.image_url}`}
-                    alt={`Case ${sc.uid} X-ray`}
-                    className="similar-case-thumb"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActiveLightboxImage(`${BASE}${sc.image_url}`);
-                    }}
-                  />
-                )}
-                <div id={`case-${sc.uid}`} className="similar-case-card">
-                  <div className="similar-case-header">
-                    <strong>Case {sc.uid}</strong>
-                    <span className="similarity-badge">
-                      {(sc.similarity * 100).toFixed(1)}% similar
-                    </span>
+          <div className="similar-cases-scroll-container">
+            <ul className="similar-cases-list">
+              {caseData.similar_cases.map((sc, i) => (
+                <li key={i} id={`case-${sc.uid}`} className="similar-case-card-new">
+                  {sc.image_url && (
+                    <img
+                      src={`${BASE}${sc.image_url}`}
+                      alt={`Case ${sc.uid} X-ray`}
+                      className="similar-case-card-thumb"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveLightboxImage(`${BASE}${sc.image_url}`);
+                      }}
+                    />
+                  )}
+                  <div className="similar-case-card-body">
+                    <div className="similar-case-header">
+                      <strong>Case {sc.uid}</strong>
+                      <span className="similarity-badge">
+                        {(sc.similarity * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    {sc.findings && <p className="report-text"><em>Findings:</em> {sc.findings}</p>}
+                    {sc.impression && <p className="report-text"><em>Impression:</em> {sc.impression}</p>}
                   </div>
-                  {sc.findings && <p className="report-text"><em>Findings:</em> {sc.findings}</p>}
-                  {sc.impression && <p className="report-text"><em>Impression:</em> {sc.impression}</p>}
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
 
-      {/* Grounded explanation */}
-      <div className="explanation-section">
-        <h3>Grounded Explanation</h3>
-        <p
-          className="disclaimer-label"
-          data-testid="explanation-disclaimer"
-        >
-          AI-generated prototype output — not for clinical use
-        </p>
-        <p data-testid="explanation-text">
-          {renderExplanation(caseData.explanation, caseData.evidence_links)}
-        </p>
-      </div>
+
 
       {/* Lightbox modal overlay */}
       {activeLightboxImage && (

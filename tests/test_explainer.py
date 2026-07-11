@@ -51,3 +51,20 @@ def test_fallback_string():
     # Either ollama or unavailable — never raises
     assert isinstance(text, str)
     assert source in ("ollama", "unavailable")
+
+
+def test_low_confidence_explanation():
+    scores = {"Pneumonia": 0.28, "Effusion": 0.15}
+    cases = [
+        {"uid": "1", "findings": "No acute disease.", "impression": "Normal chest.", "similarity": 0.9},
+        {"uid": "2", "findings": "No active disease.", "impression": "Unremarkable study.", "similarity": 0.8}
+    ]
+    prompt = build_prompt(scores, cases)
+    assert "highest finding score is below 0.4" in prompt
+    assert "Never cite a negated statement" in prompt
+
+    text, source = get_explanation(prompt)
+    if source in ("openai", "ollama"):
+        explanation_lower = text.lower()
+        assert not ("consistent with pneumonia" in explanation_lower)
+        assert not ("consistent with effusion" in explanation_lower)
