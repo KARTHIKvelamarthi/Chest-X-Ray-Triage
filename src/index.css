@@ -90,6 +90,24 @@ h3 { font-size: 1.1rem; margin-bottom: 12px; color: var(--color-muted); }
   transition: border-color 0.15s;
 }
 .btn-secondary:hover { border-color: var(--color-primary); }
+.btn-danger {
+  background: var(--color-danger);
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+.btn-danger:hover:not(:disabled) { opacity: 0.85; }
+.btn-danger:disabled { opacity: 0.4; cursor: not-allowed; }
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
 .btn-toggle {
   background: var(--color-surface);
   color: var(--color-muted);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { fetchCase, markReviewed, CaseDetail } from "./api";
+import { fetchCase, markReviewed, deleteCase, CaseDetail } from "./api";
 import { Disclaimer } from "./Disclaimer";
 
 export function ResultView() {
@@ -10,6 +10,7 @@ export function ResultView() {
   const [error, setError] = useState<string | null>(null);
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -30,6 +31,19 @@ export function ResultView() {
       setError("Failed to mark as reviewed.");
     } finally {
       setReviewing(false);
+    }
+  }
+
+  async function onDeleteCase() {
+    if (!caseData) return;
+    if (!window.confirm("Are you sure you want to permanently delete this case?")) return;
+    setDeleting(true);
+    try {
+      await deleteCase(caseData.id);
+      navigate("/queue");
+    } catch {
+      setError("Failed to delete case.");
+      setDeleting(false);
     }
   }
 
@@ -71,18 +85,28 @@ export function ResultView() {
           ← Queue
         </button>
         <h2>{caseData.filename}</h2>
-        {caseData.status === "pending" || caseData.status === "needs_human_review" ? (
+        <div className="header-actions">
+          {caseData.status === "pending" || caseData.status === "needs_human_review" ? (
+            <button
+              className="btn-primary"
+              onClick={onMarkReviewed}
+              disabled={reviewing || deleting}
+              data-testid="mark-reviewed-btn"
+            >
+              {reviewing ? "Saving…" : "Mark Reviewed"}
+            </button>
+          ) : (
+            <span className="badge badge-reviewed">Reviewed</span>
+          )}
           <button
-            className="btn-primary"
-            onClick={onMarkReviewed}
-            disabled={reviewing}
-            data-testid="mark-reviewed-btn"
+            className="btn-danger"
+            onClick={onDeleteCase}
+            disabled={reviewing || deleting}
+            data-testid="delete-case-btn"
           >
-            {reviewing ? "Saving…" : "Mark Reviewed"}
+            {deleting ? "Deleting…" : "Delete Case"}
           </button>
-        ) : (
-          <span className="badge badge-reviewed">Reviewed</span>
-        )}
+        </div>
       </div>
 
       {/* Status badges */}

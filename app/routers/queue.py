@@ -1,11 +1,15 @@
 """Queue endpoints: GET /api/queue, GET /api/queue/{id}, PATCH /api/queue/{id}."""
 import json
+import logging
+import os
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request
 
-from app.db import get_case, get_queue, update_case_status
+from app.db import delete_case, get_case, get_queue, update_case_status
 from app.models import CaseDetail, CaseSummary, FindingScore, SimilarCase, StatusUpdate
+
+logger = logging.getLogger(__name__)
 
 DISCLAIMER = "Research prototype — not for clinical use. Not a diagnostic tool."
 
@@ -84,3 +88,27 @@ async def mark_reviewed(case_id: int, body: StatusUpdate, request: Request):
         raise HTTPException(status_code=404, detail="Case not found.")
     row = get_case(conn, case_id)
     return _row_to_detail(row)
+
+
+@router.delete("/api/queue/{case_id}", status_code=204)
+async def delete_case_endpoint(case_id: int, request: Request):
+    conn = request.app.state.db_conn
+    row = get_case(conn, case_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="Case not found.")
+
+    # Clean up associated files from filesystem
+    for path_key in ("thumbnail_path", "heatmap_path"):
+        path_val = row.get(path_key)
+        if path_val:
+            local_path = path_val.lstrip("/")
+            if os.path.exists(local_path):
+                try:
+                    os.remove(local_path)
+                    logger.info(f"Deleted file: {local_path}")
+                except Exception as exc:
+                    logger.error(f"Failed to delete file {local_path}: {exc}")
+
+    # Delete database record
+    delete_case(conn, case_id)
+    return

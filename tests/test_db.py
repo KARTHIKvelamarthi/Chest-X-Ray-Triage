@@ -7,7 +7,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from app.db import get_case, get_queue, init_db, insert_case, update_case_status
+from app.db import delete_case, get_case, get_queue, init_db, insert_case, update_case_status
 
 
 def make_conn():
@@ -149,3 +149,16 @@ def test_update_nonexistent_case():
 def test_get_nonexistent_case():
     conn = make_conn()
     assert get_case(conn, 9999) is None
+
+
+def test_delete_case():
+    conn = make_conn()
+    case_id = insert_case(conn, make_case())
+    assert get_case(conn, case_id) is not None
+    assert delete_case(conn, case_id) is True
+    assert get_case(conn, case_id) is None
+
+
+def test_delete_nonexistent_case():
+    conn = make_conn()
+    assert delete_case(conn, 9999) is False

@@ -81,3 +81,10 @@ export async function markReviewed(id: number): Promise<CaseDetail> {
   if (!res.ok) throw new Error("Failed to update case");
   return res.json();
 }
+
+export async function deleteCase(id: number): Promise<void> {
+  const res = await fetch(`${BASE}/api/queue/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete case");
+}

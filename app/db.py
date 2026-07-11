@@ -114,3 +114,10 @@ def update_case_status(conn: sqlite3.Connection, case_id: int, status: str) -> b
     )
     conn.commit()
     return cur.rowcount > 0
+
+
+def delete_case(conn: sqlite3.Connection, case_id: int) -> bool:
+    """Delete a case; return False if row not found."""
+    cur = conn.execute("DELETE FROM cases WHERE id = ?", (case_id,))
+    conn.commit()
+    return cur.rowcount > 0
