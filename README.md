@@ -166,18 +166,32 @@ data/images/images_normalized/   ← image files (PNG bytes despite .dcm extensi
 - **Inference**: torchxrayvision DenseNet, 18 pathology labels, CPU inference
 - **Grad-CAM**: Heatmap overlay on the top-scoring finding
 - **Retrieval**: Cosine similarity over pre-built embedding index (top-5 similar cases)
-- **Explanation**: RAG-grounded LLM summary from retrieved reports
+- **Explanation**: RAG-grounded LLM summary from retrieved reports referencing cases by their unique database UIDs
 - **Escalation**: Cases with ambiguous scores → distinct "Needs Human Review" queue lane
 - **Priority**: High if max score > 0.7, else Normal (heuristic only)
-- **Queue**: Two-lane sortable queue, mark-reviewed, persistent across page refreshes
+- **Interactive Triage Queue**: Glassmorphic stats cards act as clickable filters to view specific lanes (Total, Needs Review, High Priority, and Reviewed cases).
+- **Responsive Card Grid Layout**: Content-focused, text-only cards that wrap automatically across screen widths to avoid horizontal scrolling.
+- **Queue Navigation**: Circular navigation controls within details view to step through active or reviewed cases contextually without leaving the page.
 
 ---
 
 ## Technical Limitations & Caveats
 
 - CPU inference only; single-image latency is several seconds
-- The model (`densenet121-res224-all`) is trained on a mix of public datasets; performance
-  on out-of-distribution images is unknown
+- The model (`densenet121-res224-all`) is trained on a mix of public datasets; performance on out-of-distribution images is unknown
 - Priority and escalation thresholds are hardcoded heuristics
 - LLM explanations are grounded in retrieved text but remain AI-generated and unverified
 - No authentication or multi-user support
+
+---
+
+## Clinical Disclaimer & Project Goals
+
+> 💡 **Design Showcase & Educational Purpose Only**
+> This project is **not approved for clinical use** and is not intended for diagnostic purposes. It was built as a research prototype to showcase design thinking in the healthcare industry—specifically, how human-in-the-loop workflows, explainable AI components (Grad-CAM), and retrieval-grounded LLM summaries can be cohesive, user-friendly, and safe.
+>
+> Any actual clinical deployment would require:
+> - Hospital-specific adjustments (calibration to local scanners, demographics, and clinical pathways).
+> - Strict regulatory clearance and clinical validation trials.
+> - Full integration with hospital systems (PACS/DICOM) and data privacy compliance (HIPAA/GDPR/DPDP).
+
